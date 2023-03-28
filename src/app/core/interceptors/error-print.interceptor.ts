@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import {
+  HttpErrorResponse,
   HttpEvent,
   HttpHandler,
   HttpInterceptor,
@@ -19,13 +20,21 @@ export class ErrorPrintInterceptor implements HttpInterceptor {
   ): Observable<HttpEvent<unknown>> {
     return next.handle(request).pipe(
       tap({
-        error: () => {
+        error: (error: any) => {
           const url = new URL(request.url);
-
-          this.notificationService.showError(
-            `Request to "${url.pathname}" failed. Check the console for the details`,
-            0
-          );
+          if (error?.status === 401) {
+            this.notificationService.showError(`Access denied: no token `, 0);
+          } else if (error?.status === 403) {
+            this.notificationService.showError(
+              `Access denied: your token is not valid `,
+              0
+            );
+          } else {
+            this.notificationService.showError(
+              `Request to "${url.pathname}" failed. Check the console for the details`,
+              0
+            );
+          }
         },
       })
     );
